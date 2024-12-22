@@ -72,48 +72,47 @@ class UserProfileScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 20),
                   // Name
-                  Text(
-                    professional.name ?? "Name not available",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+                  _buildSectionTitle(professional.name ?? "Name not available"),
                   SizedBox(height: 20),
                   // Show badges if available
                   BadgeDisplayRow(userId: userId),
                   SizedBox(height: 10),
                   // Role
-                  Text(
-                    professional.role,
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
+                  _buildSectionTitle(professional.role),
                   SizedBox(height: 20),
+                  // Navigation Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      ElevatedButton(onPressed: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>NetworkVisualizationScreen()));
-                      }, child: Text('See Network'),),
-                      ElevatedButton(onPressed: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>ImageToTextScreen()));
-                      }, child: Text('Analyze Resume'))
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    NetworkVisualizationScreen()),
+                          );
+                        },
+                        child: Text('See Network'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ImageToTextScreen()),
+                          );
+                        },
+                        child: Text('Analyze Resume'),
+                      ),
                     ],
                   ),
+                  SizedBox(height: 20),
                   // Email
-                  Row(
-                    children: [
-                      Icon(Icons.email),
-                      SizedBox(width: 10),
-                      Text(professional.email ?? "Email not available"),
-                    ],
-                  ),
+                  _buildInfoRow(Icons.email, professional.email ?? "Email not available"),
                   SizedBox(height: 10),
                   // Phone
-                  Row(
-                    children: [
-                      Icon(Icons.phone),
-                      SizedBox(width: 10),
-                      Text(professional.phone ?? "Phone not available"),
-                    ],
-                  ),
+                  _buildInfoRow(Icons.phone, professional.phone ?? "Phone not available"),
                   SizedBox(height: 20),
                   // Financial Standards
                   _buildSectionTitle("Financial Standards"),
@@ -132,21 +131,9 @@ class UserProfileScreen extends StatelessWidget {
                   _buildList(professional.technicalSkills),
                   SizedBox(height: 20),
                   // Experience & Jurisdiction
-                  Row(
-                    children: [
-                      Icon(Icons.location_on),
-                      SizedBox(width: 10),
-                      Text("Jurisdiction: ${professional.jurisdiction}"),
-                    ],
-                  ),
+                  _buildInfoRow(Icons.location_on, "Jurisdiction: ${professional.jurisdiction}"),
                   SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time),
-                      SizedBox(width: 10),
-                      Text("Experience: ${professional.yearsExperience} years"),
-                    ],
-                  ),
+                  _buildInfoRow(Icons.access_time, "Experience: ${professional.yearsExperience} years"),
                 ],
               ),
             );
@@ -156,22 +143,54 @@ class UserProfileScreen extends StatelessWidget {
     );
   }
 
-  // Helper method to build section title
+  // Helper method to build section title with container and rounded corners
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        title,
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+      ),
     );
   }
 
-  // Helper method to build list of items
+  // Helper method to build info rows for Email, Phone, etc.
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Icon(icon, color: Colors.black),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(text, style: TextStyle(color: Colors.black, fontSize: 16)),
+        ),
+      ],
+    );
+  }
+
+  // Helper method to build list of items with padding and container styling
   Widget _buildList(List<String> items) {
     return Column(
       children: items
           .map((item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
-                child: Text(item),
-              ))
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 5.0),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 244, 249, 252),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(item, style: TextStyle(color: Colors.black)),
+                  ),
+                ),
+          ))
           .toList(),
     );
   }
