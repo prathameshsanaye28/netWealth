@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:netwealth_vjti/screens/course_screen/course.dart';
 import 'package:netwealth_vjti/screens/network_visualisation_screen.dart';
 import 'package:netwealth_vjti/screens/resume_enhancer/imagetotext.dart';
 
 import '../models/professional.dart';
-
-// Assuming you already have the Professional model defined as provided.
 
 class UserProfileScreen extends StatelessWidget {
   final String userId;
@@ -77,6 +76,9 @@ class UserProfileScreen extends StatelessWidget {
                     professional.name ?? "Name not available",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
+                  SizedBox(height: 20),
+                  // Show badges if available
+                  BadgeDisplayRow(userId: userId),
                   SizedBox(height: 10),
                   // Role
                   Text(
@@ -175,73 +177,144 @@ class UserProfileScreen extends StatelessWidget {
   }
 }
 
-// class Professional {
-//   final String? id;
-//   final String? name;
-//   final String? email;
-//   final String? phone;
-//   final String role;
-//   final List<String> technicalSkills;
-//   final List<String> regulatoryExpertise;
-//   final List<String> financialStandards;
-//   final List<String> industryFocus;
-//   final String jurisdiction;
-//   final int yearsExperience;
-//   final String? photoUrl;
+class BadgeDisplayRow extends StatefulWidget {
+  final String userId;
 
-//   const Professional({
-//     this.id,
-//     required this.name,
-//     this.email,
-//     this.phone,
-//     this.role = "Professional",
-//     this.technicalSkills = const [],
-//     this.regulatoryExpertise = const [],
-//     this.financialStandards = const [],
-//     this.industryFocus = const [],
-//     required this.jurisdiction,
-//     required this.yearsExperience,
-//     this.photoUrl,
-//   });
+  BadgeDisplayRow({required this.userId});
 
-//   Map<String, dynamic> toJson() => {
-//         'id': id,
-//         'name': name,
-//         'email': email,
-//         'phone': phone,
-//         'role': role,
-//         'technicalSkills': technicalSkills,
-//         'regulatoryExpertise': regulatoryExpertise,
-//         'financialStandards': financialStandards,
-//         'industryFocus': industryFocus,
-//         'jurisdiction': jurisdiction,
-//         'yearsExperience': yearsExperience,
-//         'photoUrl': photoUrl,
-//       };
+  @override
+  _BadgeDisplayRowState createState() => _BadgeDisplayRowState();
+}
 
-//   static Professional fromSnap(DocumentSnapshot snap) {
-//     // Check if the document data exists
-//     if (!snap.exists || snap.data() == null) {
-//       throw Exception('Document does not exist or data is null');
-//     }
+class _BadgeDisplayRowState extends State<BadgeDisplayRow> {
+  late Future<List<String>> badges;
 
-//     var snapshot = snap.data() as Map<String, dynamic>;
+  @override
+  void initState() {
+    super.initState();
+    badges = fetchBadges();
+  }
 
-//     return Professional(
-//       id: snap.id,
-//       name: snapshot['name'],
-//       email: snapshot['email'],
-//       phone: snapshot['phone'],
-//       role: snapshot['role'] ?? "Professional",
-//       technicalSkills: List<String>.from(snapshot['technicalSkills'] ?? []),
-//       regulatoryExpertise:
-//           List<String>.from(snapshot['regulatoryExpertise'] ?? []),
-//       financialStandards:
-//           List<String>.from(snapshot['financialStandards'] ?? []),
-//       industryFocus: List<String>.from(snapshot['industryFocus'] ?? []),
-//       jurisdiction: snapshot['jurisdiction'],
-//       yearsExperience: snapshot['yearsExperience'],
-//       photoUrl: snapshot['photoUrl'],
-//     );
-//   }
-// }
+  Future<List<String>> fetchBadges() async {
+    // Query Firestore to get badges where userId matches
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('badges')
+        .where('userId', isEqualTo: widget.userId)
+        .get();
+
+    // Extract courseId from matching badges
+    List<String> badgeCourseIds = [];
+    for (var doc in snapshot.docs) {
+      String courseId = doc['courseId'];
+      badgeCourseIds.add(courseId); // Add the full courseId
+    }
+
+    return badgeCourseIds;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<String>>(
+      future: badges,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container();
+        }
+
+        if (snapshot.hasError) {
+          return Text("Error: ${snapshot.error}");
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          // Don't display anything related to badges if none are found
+          return SizedBox.shrink();
+        }
+
+        List<String> badgeCourseIds = snapshot.data!;
+
+        return Row(
+          children: [
+            SizedBox(width: 20),
+            ...badgeCourseIds.map((courseId) => Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                onTap: () async {
+                  // Fetch course details when badge is clicked
+                  final course = await fetchCourseDetails(courseId);
+                  // Show snackbar with course details
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Course: ${course.title}\nDescription: ${course.description}',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                },
+                child: CircleBadge(courseId: courseId),
+              ),
+            )).toList(),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<Course> fetchCourseDetails(String courseId) async {
+    // Query Firestore to get course details by courseId
+    DocumentSnapshot snapshot = await FirebaseFirestore.instance
+        .collection('courses')
+        .doc(courseId)  // Fetch the course directly by its courseId
+        .get();
+
+    if (snapshot.exists) {
+      return Course.fromSnapshot(snapshot);
+    } else {
+      return Course(
+        id: '',
+        title: 'Course not found',
+        description: 'No description available.',
+        category: '',
+        thumbnail: '',
+        modules: [],
+        totalDuration: 0,
+        enrolledUsers: [],
+        completedUsers: [],
+        rating: 0.0,
+        numberOfRatings: 0,
+      );
+    }
+  }
+}
+
+class CircleBadge extends StatelessWidget {
+  final String courseId;
+
+  CircleBadge({required this.courseId});
+
+  @override
+  Widget build(BuildContext context) {
+    // Get the first letter of the courseId to display in the badge
+    String firstLetter = courseId.isNotEmpty ? courseId[0].toUpperCase() : '';
+
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.blue, // Background color of the circle
+      ),
+      child: Center(
+        child: Text(
+          firstLetter,  // Display the first letter of courseId
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24, // Adjust the font size
+          ),
+        ),
+      ),
+    );
+  }
+}

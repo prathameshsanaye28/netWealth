@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:netwealth_vjti/models/badges.dart';
 import 'package:netwealth_vjti/screens/course_screen/course.dart';
 
 class CourseService {
@@ -67,20 +68,42 @@ class CourseService {
   }
 
   Future<void> markCourseAsCompleted(String userId, String courseId) async {
-    await _firestore.runTransaction((transaction) async {
-      DocumentReference courseRef = _firestore.collection('courses').doc(courseId);
-      DocumentSnapshot courseSnapshot = await transaction.get(courseRef);
-      
-      if (courseSnapshot.exists) {
-        List<String> completedUsers = List<String>.from(
-            courseSnapshot.get('completedUsers') ?? []);
-        if (!completedUsers.contains(userId)) {
-          completedUsers.add(userId);
-          transaction.update(courseRef, {'completedUsers': completedUsers});
-        }
-      } else {
-        throw Exception('Course not found.');
-      }
-    });
-  }
+  final badgeRef = FirebaseFirestore.instance.collection('badges').doc(); // Reference for badge doc
+  final badgeId = badgeRef.id; // Use Firestore document ID as the badgeId
+
+  await FirebaseFirestore.instance.runTransaction((transaction) async {
+    // Read the course document
+    DocumentReference courseRef =
+        FirebaseFirestore.instance.collection('courses').doc(courseId);
+    DocumentSnapshot courseSnapshot = await transaction.get(courseRef);
+
+    if (!courseSnapshot.exists) {
+      throw Exception('Course not found.');
+    }
+
+    // Prepare the `completedUsers` list
+    List<String> completedUsers =
+        List<String>.from(courseSnapshot.get('completedUsers') ?? []);
+    if (!completedUsers.contains(userId)) {
+      completedUsers.add(userId);
+    }
+
+    // After all reads, perform the writes
+    transaction.update(courseRef, {'completedUsers': completedUsers});
+
+    // Add a badge entry
+    transaction.set(
+      badgeRef,
+      {
+        'badgeId': badgeId, // Store the badgeId explicitly
+        'userId': userId,
+        'courseId': courseId,
+        'awardedAt': Timestamp.now(),
+        
+      },
+    );
+  });
+}
+  
+
 }
