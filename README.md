@@ -53,7 +53,7 @@ A dedicated networking and collaboration platform for FinTech professionals, sta
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/netwealth.git
+git clone https://github.com/prathameshsanaye28/netwealth.git
 cd netwealth
 ```
 
@@ -105,17 +105,9 @@ flutter run
 - Virtual collaboration spaces
 - Advanced matching algorithms
 
-## 🤝 Contributing
-
-We welcome contributions to NetWealth! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and contribute to the project.
-
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE.md) - see the LICENSE.md file for details.
-
-## 📞 Support
-
-For support, please email support@netwealth.com or join our [Discord community](https://discord.gg/netwealth).
 
 ## ✨ Impact
 
